@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Results
+{% endblock %}
+
+{% block main %}
+<h3>Results: </h3>
+
+<div class="dropdown-divider"></div>
+
+<div class="container">
+    <div class="row">
+        {% for book in books %}
+        <div class="card border-primary mb-3 col-lg-4 col-sm- 6" >
+            <div class="card-body">
+                <h4 class="card-title">Title: {{book['title']}}</h4>
+                <h6 class="card-text">Author: {{book['author']}}</h6>
+                <h6 class="card-text">Year: {{book['year']}}</h6>
+                <h6 class="card-text">ISBN: {{book['isbn']}}</h6>
+            </div>
+            <div class="card-footer">
+                <a href="/book/{{book['isbn']}}" class="card-link">Go to book page</a>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+</div>
+{% endblock %}

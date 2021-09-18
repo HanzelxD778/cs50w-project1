@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Home
+{% endblock %}
+
+{% block main %}
+
+    <h3>Search for a book!</h3>
+
+    <form action="/search" method="GET">
+        <div class="form-group mt-3">
+                <input required type="text" name="book" class="form-control" autofocus placeholder="ISBN, Title or Author">
+                <small class="form-text text-muted">Example: 1416949658, The Dark Is Rising or Susan Cooper</small>
+        </div>
+        <button class="btn btn-primary" type="submit">Search</button>
+    </form>
+
+{% endblock %}
