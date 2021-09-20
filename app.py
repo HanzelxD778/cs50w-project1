@@ -2,6 +2,7 @@
 import os
 #import re
 
+import requests
 from flask import Flask, session, redirect, render_template, request, flash, url_for
 from flask_session import Session
 from sqlalchemy import create_engine
@@ -126,31 +127,34 @@ def search():
     #teasting boodId
     row = db.execute("SELECT id FROM books WHERE isbn = :isbn", {"isbn": "0380795272"})
 
-    #guardar el id en una variable, testing book id
+    """guardar el id en una variable, testing book id para la def book 
+        hice la prueba aqui para ver si funcionaba abajo
     bookId = row.fetchone()
-    print("Esto es TODO lo que contiene bookId: " + str(bookId))
+    print("Esto es todo lo que contiene bookId: " + str(bookId))
+        esto imprime la linea de arriba: Esto es todo lo que contiene bookId: (2,)
     bookId = bookId[0]
     print("Esto es lo que contiene bookId[0]: " + str(bookId))
+        esto imprime la linea de arriba: Esto es lo que contiene bookId[0]: 2
+    """
     
     # Fetch all the results
     books = rows.fetchall()
 
     return render_template("results.html", books=books)
 
-"""@app.route("/search/<isbn>", methods=["GET", "POST"])
+@app.route("/book/<isbn>", methods=["GET", "POST"])
 @login_required
 def book(isbn):
     if request.method == "POST":
-        #guardar sesion del usuario
-        current_user = session["id_user"]
+        return render_template("book.html")
+    else:
 
-        #almacenar la data ingresada en el formulario
-        rating = request.form.get("rating")
-        comment = request.form.get("comment")
+        bookInfo = db.execute("SELECT isbn, title, author, year FROM books WHERE isbn = :isbn", {"isbn": isbn}).fetchall()
 
-        #identificar el id del libro por su isbn
-        row = db.execute("SELECT id FROM books WHERE isbn = :isbn", {"isbn": isbn})
+        
+        respone = requests.get("https://www.googleapis.com/books/v1/volumes?q=isbn:"+isbn).json()
+        bookInfoApi = respone["items"][0]["volumeInfo"]
 
-        #guardar el id en una variable
-        bookId = row.fetchone()
-        bookId = bookId[0]"""
+        image = bookInfoApi["imageLinks"]["smallThumbnail"]
+
+        return render_template("book.html", bookInfo=bookInfo, image=image)

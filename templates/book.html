@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {{bookInfo[0]["title"]}}
+{% endblock %}
+
+{% block main %}
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4 col-sm-6">
+                <img src="{{image}}" alt="">
+            </div>
+            <div class="col-lg-4 col-sm-6">
+                    <h1>{{bookInfo[0]["title"]}}</h1>
+                    <h5>Author: {{bookInfo[0]["author"]}}</h5>
+                    <h5>Published: {{bookInfo[0]["year"]}}</h5>
+                    <h5>ISBN: {{bookInfo[0]["isbn"]}}</h5>  
+            </div>
+            <div class="col-lg-4 col-sm-6">
+                
+            </div>
+        </div>
+    </div>
+    
+{% endblock %}
