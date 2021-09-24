@@ -1,9 +1,10 @@
 #from _typeshed import ReadableBuffer
 import os
+from flask.wrappers import Response
 #import re
 
 import requests
-from flask import Flask, session, redirect, render_template, request, flash, url_for
+from flask import Flask, session, redirect, render_template, request, flash, url_for, json, jsonify
 from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -146,15 +147,107 @@ def search():
 @login_required
 def book(isbn):
     if request.method == "POST":
-        return render_template("book.html")
+        # Guardar actual usuario
+        currentUser = session["user_id"]
+        
+        # Fetch la data
+        rating = request.form.get("rating")
+        review = request.form.get("review")
+        
+        # Buscar book_id por ISBN
+        row = db.execute("SELECT id FROM books WHERE isbn = :isbn",
+                        {"isbn": isbn})
+
+        # Guardar id en una variable
+        bookId = row.fetchone() 
+        bookId = bookId[0]
+
+        # Revisar que el usuario solo haga un submission por libro
+        row2 = db.execute("SELECT * FROM reviews WHERE user_id = :user_id AND book_id = :book_id",
+                    {"user_id": currentUser,
+                     "book_id": bookId})
+
+        # Si un review ya existe
+        if row2.rowcount == 1:
+            
+            flash('You already submitted a review for this book', 'warning')
+            return redirect("/book/" + isbn)
+
+        # Casteo de int a entero
+        rating = int(rating)
+
+        db.execute("INSERT INTO reviews (user_id, book_id, review, rating) VALUES \
+                    (:user_id, :book_id, :review, :rating)",
+                    {"user_id": currentUser, 
+                    "book_id": bookId, 
+                    "review": review, 
+                    "rating": rating})
+
+        # Cometer transaccion 
+        db.commit()
+
+        flash('Review submitted!', 'info')
+
+        return redirect("/book/" + isbn)
     else:
 
-        bookInfo = db.execute("SELECT isbn, title, author, year FROM books WHERE isbn = :isbn", {"isbn": isbn}).fetchall()
+        bookInfo = db.execute("SELECT id, isbn, title, author, year FROM books WHERE isbn = :isbn", {"isbn": isbn}).fetchone()
 
+        response = requests.get("https://www.googleapis.com/books/v1/volumes?q=isbn:"+isbn).json()
+        bookInfoApi = response["items"][0]["volumeInfo"]
+
+        #validar imagen
+        try:
+            image = bookInfoApi["imageLinks"]["smallThumbnail"]
+        except KeyError:
+            image = "static/img/image_not_available.jpg"
+
+        #validar descripcion
+        try:
+            description = bookInfoApi["description"]
+        except:
+            description = "Description not available"
+
+        #validar puntaje promedio
+        try:
+            averageRating = bookInfoApi["averageRating"]
+        except:
+            averageRating = "Average rating not available"
         
-        respone = requests.get("https://www.googleapis.com/books/v1/volumes?q=isbn:"+isbn).json()
-        bookInfoApi = respone["items"][0]["volumeInfo"]
+        #validar cantidad de puntuaciones
+        try:
+            ratingsCount = bookInfoApi["ratingsCount"]
+        except:
+            ratingsCount = "Ratings count not available"
 
-        image = bookInfoApi["imageLinks"]["smallThumbnail"]
+        id = bookInfo["id"]
 
-        return render_template("book.html", bookInfo=bookInfo, image=image)
+        reviews = db.execute("SELECT username, review, rating from users JOIN reviews ON reviews.user_id = users.id_user where book_id = :id",
+        {"id": id}).fetchall()
+
+        return render_template("book.html", reviews=reviews, bookInfo=bookInfo, image=image, description=description, averageRating=averageRating, ratingsCount=ratingsCount)
+
+@app.route("/api/<isbn>", methods=["GET"])
+def api(isbn):
+
+    ISBN = isbn
+
+    book = db.execute("""SELECT * FROM "books" WHERE "isbn" = :isbn""", {"isbn": ISBN}).fetchone()
+
+    if book:
+        reviews = db.execute(""" SELECT AVG("rating"), COUNT("rating") FROM "reviews" 
+                                WHERE "book_id" = :book_id """,
+                                {"book_id" : book["id"]}).fetchone()
+
+        response = {
+            "title": book["title"],
+            "author": book["author"],
+            "year": book["year"],
+            "isbn": book["isbn"],
+            "review_count": str(reviews[1]),
+            "average_score": str(reviews[0])
+        }
+
+        return json.dumps(response)
+    else:
+        return jsonify({"Error": "Invalid book ISBN"}), 404
