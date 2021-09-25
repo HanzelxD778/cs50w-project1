@@ -1,3 +1,5 @@
 # Project 1
 
-Web Programming with Python and JavaScript
+## Web Programming with Python and JavaScript
+
+### Aplicación web hecha con python y utilizando el microframework flask que permite que usuarios puedan registrarse en la aplicación proveyendo un nombre de usuario y una contraseña, si ya tienen una cuenta pueden iniciar sesión con esa cuenta, una vez inicio sesión puede buscar libros (en inglés) por el isbn (identificador único para cada libro), titulo, autor de un libro, esto te mostrara el libro a buscar o libros similares si existen más resultados que coinciden con la búsqueda, al dar click en algún libro este por metodo get, este muestra información del libro de la base de datos en postrgre sql (ibsn, nombre, autor, año), muestra el puntaje promedio, cantidad de puntuaciones que el libro ha recibido de Goodreads (Google Books API) y muestra reseñas hechas por los usuarios, por método post se pueden publicar reseñas acerca de el libro seleccionado y dar una puntuación del 1 al 5, por ultimo accediendo a la ruta /api/ añadiendo un código isbn al final de la url se puede acceder a un string con formato JSON que muestra el título del libro, autor, fecha de publicación, número ISBN, conteo de reseñas, y puntaje promedio.
